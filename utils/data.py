@@ -8,18 +8,6 @@ class Data:
     """
     Class that handles operations on data (ex: loading, preprocessing, etc.)
     """
-    
-    @staticmethod
-    def dataframe_to_np_array(df: pd.DataFrame) -> np.array:
-        """
-        Convert a dataframe to a numpy array
-        Params:
-            df (pd.DataFrame): Dataframe to convert to numpy array.
-        Returns:
-            np.array: Numpy array containing the data from the dataframe, with the correct shape.
-        """
-        # TODO: Implement this method
-        pass
 
     @staticmethod
     def load_class_data(base_dir: str, class_name: str) -> pd.DataFrame:
