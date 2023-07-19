@@ -2,15 +2,13 @@ import os
 import pandas as pd
 import numpy as np
 
-from IPython.display import display
-
 class Data:
     """
     Class that handles operations on data (ex: loading, preprocessing, etc.)
     """
 
     @staticmethod
-    def truncate_dataframe_rows(df: pd.DataFrame, max_rows: int) -> pd.DataFrame:
+    def __truncate_dataframe_rows(df: pd.DataFrame, max_rows: int) -> pd.DataFrame:
         """
         Truncate a dataframe to a given number of rows.
         Params:
@@ -22,7 +20,7 @@ class Data:
         return df.iloc[:max_rows]
     
     @staticmethod
-    def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    def __process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         # Drop the time column
         df: pd.DataFrame = df.drop(columns=['Time'])
 
@@ -50,17 +48,38 @@ class Data:
         return df
 
     @staticmethod
-    def load_class_data(base_dir: str, class_name: str) -> list[pd.DataFrame]:
+    def __convert_to_numpy(list_df: list[pd.DataFrame]) -> list[pd.DataFrame]:
+        """
+        Truncate dataframes if needed, then convert them to numpy arrays.
+        Params:
+            list_df (list[pd.DataFrame]): List of dataframes to truncate.
+        Returns:
+            list[np.ndarray]: List of truncated dataframes under the form of a numpy multidimensional array.
+        """
+        # Get the minimum number of rows for all dataframes
+        min_rows: int = min([df.shape[0] for df in list_df])
+        
+        # Truncate the dataframes if needed
+        truncated_list_df: np.ndarray = np.array(
+            list(map(lambda df: Data.__truncate_dataframe_rows(df, min_rows).to_numpy().astype(np.float32), list_df)),
+            dtype=object
+        )
+        
+        return truncated_list_df
+    
+    @staticmethod
+    def __load_class_data(base_dir: str, class_name: str) -> list[pd.DataFrame]:
         """
         Load data from a given class directory. Here the name of the class is the name of the directory.
         Params:
             base_dir (str): Base directory of the data
             class_name (str): Name of the class
         Returns:
-            pd.DataFrame: Dataframe containing the data from the class
+            list[pd.DataFrame]: List of dataframes containing all the data from the given class.
         """
+        # Determine given class data directory
         class_dir: str = os.path.join(base_dir, class_name)
-
+        # List of dataframes containing the data from the class
         dataframe_list: list[pd.DataFrame] = []
         
         for file_name in os.listdir(class_dir):
@@ -69,24 +88,30 @@ class Data:
             # Load the data from the file into a dataframe
             new_data: pd.Dataframe = pd.read_csv(file_path)
             # Process the dataframe and add it to the list
-            dataframe_list.append(Data.process_dataframe(new_data))
+            dataframe_list.append(Data.__process_dataframe(new_data))
 
         return dataframe_list
 
     @staticmethod
-    def load_data(base_dir: str) -> list[pd.DataFrame]:
+    def load_data(base_dir: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Load data from a given base directory. Here the name of the class is the name of the directory.
         Params:
             base_dir (str): Base directory of the data
         Returns:
-            list[pd.DataFrame]: List of dataframes containing the data from all the classes.
+            tuple[np.ndarray, np.ndarray, np.ndarray]: Tuple containing the dataframes as a numpy array,
+                                                       the labels as a numpy array,
+                                                       and the classes as a numpy array
         """
         data: list[pd.DataFrame] = []
+        classes: list[str] = []
+        labels: list[str] = []
         
         for class_name in os.listdir(base_dir):
-            data.append(Data.load_class_data(base_dir, class_name))
-            # FIXME: implement loop body
-            pass
+            classes.append(class_name)
+            class_data = Data.__load_class_data(base_dir, class_name)
+            data.extend(class_data)
+            labels.extend([class_name] * len(class_data))
     
-        return data
+        # Return the dataframes as a numpy array, the labels as a numpy array and the classes as a numpy array
+        return Data.__convert_to_numpy(data), np.array(labels), np.array(classes)
