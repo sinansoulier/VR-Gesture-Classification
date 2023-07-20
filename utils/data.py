@@ -21,29 +21,30 @@ class Data:
     
     @staticmethod
     def __process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Process a dataframe by splitting each column into 3 columns (x, y, z) for each column.
+        Params:
+            df (pd.DataFrame): Dataframe to process
+        Returns:
+            pd.DataFrame: Processed dataframe
+        """
         # Drop the time column
-        df: pd.DataFrame = df.drop(columns=['Time'])
+        df.drop(columns=['Time'], inplace=True)
+        # Cast all data to float
+        df = df.applymap(lambda x: [float(elt) for elt in x.split(';')])
 
-        # For each column, split the string into 3 columns (x, y, z)
-        for column_name in df.columns:
-            # Convert the string column to floats
-            column_to_float: pd.Series = df[column_name].apply(lambda x: np.array(x.split(';')).astype(np.float32))
-            
-            # Create 3 new columns (x, y, z)
-            column_x: pd.Series = column_to_float.map(lambda x: x[0])
-            column_x.name = column_name + '_x'
+        column_names = df.columns
+        list_df_ax = []
 
-            column_y: pd.Series = column_to_float.map(lambda x: x[1])
-            column_y.name = column_name + '_y'
+        # Apply processing to earch axis
+        for i, axis in enumerate(['x', 'y', 'z']):
+            new_column_names = column_names.map(lambda x: x + '_' + axis)
+            df_ax = df.applymap(lambda x: x[i])
+            df_ax.columns = new_column_names
+            list_df_ax.append(df_ax)
 
-            column_z: pd.Series = column_to_float.map(lambda x: x[2])
-            column_z.name = column_name + '_z'
-
-            # Add newly created columns to the dataframe
-            df = pd.concat([df, column_x, column_y, column_z], axis=1)
-
-            # Drop the origin column
-            df = df.drop(columns=[column_name])
+        # Concatenate the newly created dataframes
+        df = pd.concat(list_df_ax, axis=1)
     
         return df
 
@@ -108,9 +109,13 @@ class Data:
         labels: list[str] = []
         
         for class_name in os.listdir(base_dir):
+            # Add the class name to the build the classes list
             classes.append(class_name)
+            # Load the data for the current class
             class_data = Data.__load_class_data(base_dir, class_name)
+            # Add the data to the list of dataframes
             data.extend(class_data)
+            # Add the class name to the labels list
             labels.extend([class_name] * len(class_data))
     
         # Return the dataframes as a numpy array, the labels as a numpy array and the classes as a numpy array
