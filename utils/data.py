@@ -64,7 +64,7 @@ class Data:
         truncated_list_df: np.ndarray = np.array(
             list(map(lambda df: Data.__truncate_dataframe_rows(df, min_rows).to_numpy().astype(np.float32), list_df)),
             dtype=object
-        )
+        ).astype(np.float32)
         
         return truncated_list_df
     
@@ -108,7 +108,7 @@ class Data:
         classes: list[str] = []
         labels: list[str] = []
         
-        for class_name in os.listdir(base_dir):
+        for i, class_name in enumerate(os.listdir(base_dir)):
             # Add the class name to the build the classes list
             classes.append(class_name)
             # Load the data for the current class
@@ -116,7 +116,7 @@ class Data:
             # Add the data to the list of dataframes
             data.extend(class_data)
             # Add the class name to the labels list
-            labels.extend([class_name] * len(class_data))
+            labels.extend([i] * len(class_data))
     
         # Return the dataframes as a numpy array, the labels as a numpy array and the classes as a numpy array
         return Data.__convert_to_numpy(data), np.array(labels), np.array(classes)
