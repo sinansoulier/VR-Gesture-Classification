@@ -32,6 +32,8 @@ class VRGestureRecognizer(nn.Module):
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
         self.conv4 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)
 
+        self.flatten = nn.Flatten()
+
         # Fully connected layers
         self.fc1 = nn.Linear(256*4*7, hidden_size)
         self.fc2 = nn.Linear(hidden_size, 64)
@@ -59,7 +61,7 @@ class VRGestureRecognizer(nn.Module):
         out = self.maxpool(self.relu(self.conv4(out)))
 
         # Flattening feature maps
-        out = torch.flatten(out, 1)
+        out = self.flatten(out)
 
         # Fully connected part
         out = self.relu(self.fc1(out))
