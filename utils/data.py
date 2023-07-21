@@ -1,6 +1,9 @@
 import os
+from typing import Generator
+
 import pandas as pd
 import numpy as np
+import torch
 
 class Data:
     """
@@ -120,3 +123,38 @@ class Data:
     
         # Return the dataframes as a numpy array, the labels as a numpy array and the classes as a numpy array
         return Data.__convert_to_numpy(data), np.array(labels), np.array(classes)
+    
+    @staticmethod
+    def data_generator(X: np.ndarray, y: np.ndarray, batch_size: int=32) -> Generator:
+        """
+        Data generator for PyTorch.
+        Params:
+            X (np.ndarray): Data
+            y (np.ndarray): Labels
+            batch_size (int): Size of the batch, default to 32
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: Tuple containing the data and the labels
+        """
+        # Number of samples
+        n_samples: int = X.shape[0]
+        
+        # Shuffle indices
+        indices: np.ndarray = np.arange(n_samples)
+        np.random.shuffle(indices)
+        
+        # Shuffle data
+        X: np.ndarray = X[indices]
+        y: np.ndarray = y[indices]
+        
+        # Iterate over the dataset
+        for i in range(0, n_samples, batch_size):
+            # Get batch data
+            X_batch = X[i:i+batch_size]
+            y_batch = y[i:i+batch_size]
+            
+            # Convert to torch tensors
+            X_batch = torch.from_numpy(X_batch)
+            y_batch = torch.from_numpy(y_batch)
+            
+            # Yield the batch
+            yield X_batch, y_batch
