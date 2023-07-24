@@ -23,6 +23,21 @@ class Data:
         return df.iloc[:max_rows]
     
     @staticmethod
+    def __create_new_columns(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
+        """
+        Create a new column from a given column by splitting it into 3 columns (x, y, z).
+        Params:
+            df (pd.DataFrame): Dataframe to process
+            column_name (str): Name of the column to split
+        Returns:
+            pd.DataFrame: Dataframe with the new columns
+        """
+        return pd.DataFrame(
+            df[column_name].to_list(),
+            columns=[column_name + '_x', column_name + '_y', column_name + '_z']
+        )
+        
+    @staticmethod
     def __process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         """
         Process a dataframe by splitting each column into 3 columns (x, y, z) for each column.
@@ -36,15 +51,8 @@ class Data:
         # Cast all data to float
         df = df.applymap(lambda x: [float(elt) for elt in x.split(';')])
 
-        column_names = df.columns
-        list_df_ax = []
-
-        # Apply processing to earch axis
-        for i, axis in enumerate(['x', 'y', 'z']):
-            new_column_names = column_names.map(lambda x: x + '_' + axis)
-            df_ax = df.applymap(lambda x: x[i])
-            df_ax.columns = new_column_names
-            list_df_ax.append(df_ax)
+        # Apply split on each column
+        list_df_ax = df.columns.map(lambda column_name: Data.__create_new_columns(df, column_name))
 
         # Concatenate the newly created dataframes
         df = pd.concat(list_df_ax, axis=1)
@@ -120,8 +128,9 @@ class Data:
             data.extend(class_data)
             # Add the class name to the labels list
             labels.extend([i] * len(class_data))
-    
-        # Return the dataframes as a numpy array, the labels as a numpy array and the classes as a numpy array
+
+        # Return the dataframes as a numpy array, 
+        # the labels as a numpy array and the classes as a numpy array
         return Data.__convert_to_numpy(data), np.array(labels), np.array(classes)
     
     @staticmethod
@@ -135,19 +144,16 @@ class Data:
         Returns:
             tuple[torch.Tensor, torch.Tensor]: Tuple containing the data and the labels
         """
-        # Number of samples
-        n_samples: int = X.shape[0]
-        
+        # Generate indices
+        indices: np.ndarray = np.arange(X.shape[0])
         # Shuffle indices
-        indices: np.ndarray = np.arange(n_samples)
         np.random.shuffle(indices)
         
-        # Shuffle data
-        X: np.ndarray = X[indices]
-        y: np.ndarray = y[indices]
-        
+        # Retrieve suffled data
+        X, y = X[indices], y[indices]
+
         # Iterate over the dataset
-        for i in range(0, n_samples, batch_size):
+        for i in range(0, X.shape[0], batch_size):
             # Get batch data
             X_batch = X[i:i+batch_size]
             y_batch = y[i:i+batch_size]
