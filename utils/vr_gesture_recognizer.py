@@ -218,16 +218,17 @@ class VRGestureRecognizer(nn.Module):
 
         plt.show()
 
-    def export_to_onnx(self, path: str) -> None:
+    def export_to_onnx(self, path: str, data_shape: tuple[int, int]) -> None:
         """
         Export the a model instance - with all the weights and biases - to ONNX format.
         This generated file can be used to run inference on a device or environment that does not support PyTorch,
         such as a mobile device or a Virtual Reality headset.
         Params:
             path (str): Path to the ONNX file
+            data_shape (tuple[int, int]): Shape of the input data
         """
         self.eval()
-        X = torch.randn(1, 1, 71, 114, requires_grad=True)
+        X = torch.randn(1, 1, data_shape[0], data_shape[1], requires_grad=True)
         torch.onnx.export(
             self.to('cpu'),
             X,
