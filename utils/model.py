@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from tqdm.auto import tqdm
 
 import torch
 import torch.nn as nn
@@ -80,7 +81,7 @@ class VRGestureRecognizer(nn.Module):
         self.optimizer = optimizer
         self.loss_fn = loss_fn
     
-    def fit(self, X, y, epochs, batch_size, learning_rate) -> pd.DataFrame:
+    def fit(self, X, y, X_val, y_val, epochs, batch_size, learning_rate) -> pd.DataFrame:
         """
         Train the model on a given dataset and from hyperparameters.
         Params:
@@ -94,17 +95,20 @@ class VRGestureRecognizer(nn.Module):
         """
         optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
         
-        history = pd.DataFrame(columns=['Loss', 'Accuracy'])
+        history = pd.DataFrame(columns=['Loss', 'Accuracy', 'Val Loss', 'Val Accuracy'])
         # Iterate over epochs
-        for epoch in range(epochs):
+        for epoch in tqdm(range(epochs)):
             mean_loss = 0
+            val_loss = 0
             mean_acc = 0
+            val_acc = 0
 
             # Define a data generator
             data_gen = Data.data_generator(X, y, batch_size=batch_size)
             n_batches = 0
-            self.train()
-            for i, batch in enumerate(data_gen):
+            
+            for batch in data_gen:
+                self.train()
                 n_batches += 1
                 # Get batch data
                 X_batch, y_batch = batch
@@ -122,24 +126,49 @@ class VRGestureRecognizer(nn.Module):
                 # Update epoch loss
                 mean_loss += loss.item()
                 # Update epoch accuracy
-                mean_acc += outputs.to('cpu').argmax(dim=1).eq(y_batch.to('cpu')).sum().item()
+                mean_acc += outputs.to('cpu').argmax(dim=1).eq(y_batch.to('cpu')).sum().item()                
 
                 # Compute mean loss and accuracy for the current epoch
             mean_loss /= n_batches
             mean_acc = mean_acc / (n_batches * batch_size)
 
+            # Compute validation loss and accuracy
+            self.eval()
+            with torch.no_grad():
+                X_val_t = torch.from_numpy(X_val).to(Hardware.device()).unsqueeze(1)
+                y_val_t = torch.from_numpy(y_val).to(Hardware.device())
+                outputs_val = self(X_val_t)
+                loss_val = self.loss_fn(outputs_val, y_val_t.long())
+                val_loss = loss_val.item()
+                val_acc = outputs_val.to('cpu').argmax(dim=1).eq(y_val_t.to('cpu')).sum().item() / X_val.shape[0]
+
             # Add epoch results to history
-            history.loc[epoch] = [mean_loss, mean_acc]
+            history.loc[epoch] = [mean_loss, mean_acc, val_loss, val_acc]
         
             # Print epoch results
-            print(f"Epoch [{epoch+1}/{epochs}] | Loss: {loss.item():.2f} | Accuracy: {mean_acc:.2f}")
+            print(f"Epoch [{epoch+1}/{epochs}] | Loss: {loss.item():.2f} | Accuracy: {mean_acc:.2f} | Val Loss: {val_loss:.2f} | Val Accuracy: {val_acc:.2f}", end='\r')
             if mean_acc > 0.9:
+                print("Early stopping: accuracy > 0.9" + " "*50)
                 break
         
         self.history = history
         
         return history
     
+    def predict(self, X) -> torch.Tensor:
+        """
+        Perform inference on a given dataset.
+        Params:
+            X (np.ndarray): Inference data.
+        Returns:
+            torch.Tensor: Inference results.
+        """
+        self.eval()
+        with torch.no_grad():
+            X_t = torch.from_numpy(X).to(Hardware.device()).unsqueeze(1)
+            outputs = self(X_t)
+            return outputs.to('cpu').argmax(dim=1)
+
     def evaluate(self, X, y) -> tuple[float, float]:
         """
         Evaluate the model on a given dataset.
@@ -167,16 +196,26 @@ class VRGestureRecognizer(nn.Module):
         Params:
             history (pd.DataFrame): Training history
         """
-        _, ax = plt.subplots(1, 2, figsize=(15, 5))
-        ax[0].plot(self.history['Loss'], color='red')
-        ax[0].set_title('Loss')
-        ax[0].set_xlabel('Epoch')
-        ax[0].set_ylabel('Loss')
+        _, ax = plt.subplots(2, 2, figsize=(20, 10))
+        ax[0][0].plot(self.history['Loss'], color='red')
+        ax[0][0].set_title('Training Loss')
+        ax[0][0].set_xlabel('Epoch')
+        ax[0][0].set_ylabel('Loss')
 
-        ax[1].plot(self.history['Accuracy'])
-        ax[1].set_title('Accuracy')
-        ax[1].set_xlabel('Epoch')
-        ax[1].set_ylabel('Accuracy')
+        ax[0][1].plot(self.history['Accuracy'])
+        ax[0][1].set_title('Training Accuracy')
+        ax[0][1].set_xlabel('Epoch')
+        ax[0][1].set_ylabel('Accuracy')
+
+        ax[1][0].plot(self.history['Val Loss'], color='red')
+        ax[1][0].set_title('Validation Loss')
+        ax[1][0].set_xlabel('Epoch')
+        ax[1][0].set_ylabel('Loss')
+
+        ax[1][1].plot(self.history['Val Accuracy'])
+        ax[1][1].set_title('Validation Accuracy')
+        ax[1][1].set_xlabel('Epoch')
+        ax[1][1].set_ylabel('Accuracy')
 
         plt.show()
 
