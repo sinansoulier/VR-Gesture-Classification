@@ -33,6 +33,7 @@ class VRGestureRecognizer(nn.Module):
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
         self.conv4 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)
 
+        # Flattening layer
         self.flatten = nn.Flatten()
 
         # Fully connected layers
@@ -71,14 +72,12 @@ class VRGestureRecognizer(nn.Module):
         
         return out
     
-    def compile(self, optimizer, loss_fn):
+    def compile(self, loss_fn):
         """
         Compile the model by defining the optimizer and the loss function.
         Params:
-            optimizer: Optimizer to use for training
             loss_fn: Loss function to use for training
         """
-        self.optimizer = optimizer
         self.loss_fn = loss_fn
     
     def fit(self, X, y, X_val, y_val, epochs, batch_size, learning_rate) -> pd.DataFrame:
