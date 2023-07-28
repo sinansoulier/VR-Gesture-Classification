@@ -195,26 +195,20 @@ class VRGestureRecognizer(nn.Module):
         Params:
             history (pd.DataFrame): Training history
         """
-        _, ax = plt.subplots(2, 2, figsize=(20, 10))
-        ax[0][0].plot(self.history['Loss'], color='red')
-        ax[0][0].set_title('Training Loss')
-        ax[0][0].set_xlabel('Epoch')
-        ax[0][0].set_ylabel('Loss')
+        _, ax = plt.subplots(1, 2, figsize=(20, 5))
+        ax[0].plot(self.history['Loss'], color='blue')
+        ax[0].plot(self.history['Val Loss'], color='red')
+        ax[0].set_title('Loss')
+        ax[0].set_xlabel('Epoch')
+        ax[0].set_ylabel('Loss')        
+        ax[0].legend(['Training Loss', 'Validation Loss'])
 
-        ax[0][1].plot(self.history['Accuracy'])
-        ax[0][1].set_title('Training Accuracy')
-        ax[0][1].set_xlabel('Epoch')
-        ax[0][1].set_ylabel('Accuracy')
-
-        ax[1][0].plot(self.history['Val Loss'], color='red')
-        ax[1][0].set_title('Validation Loss')
-        ax[1][0].set_xlabel('Epoch')
-        ax[1][0].set_ylabel('Loss')
-
-        ax[1][1].plot(self.history['Val Accuracy'])
-        ax[1][1].set_title('Validation Accuracy')
-        ax[1][1].set_xlabel('Epoch')
-        ax[1][1].set_ylabel('Accuracy')
+        ax[1].plot(self.history['Accuracy'], color='red')
+        ax[1].plot(self.history['Val Accuracy'])
+        ax[1].set_title('Accuracy')
+        ax[1].set_xlabel('Epoch')
+        ax[1].set_ylabel('Loss')
+        ax[1].legend(['Training Accuracy', 'Validation Accuracy'])
 
         plt.show()
 

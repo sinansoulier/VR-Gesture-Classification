@@ -165,3 +165,4 @@ data/
 # Assets
 models/
 *.npy
+test*/

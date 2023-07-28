@@ -38,7 +38,7 @@ class Data:
         )
         
     @staticmethod
-    def __process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         """
         Process a dataframe by splitting each column into 3 columns (x, y, z) for each column.
         Params:
@@ -60,7 +60,7 @@ class Data:
         return df
 
     @staticmethod
-    def __convert_to_numpy(list_df: list[pd.DataFrame]) -> list[pd.DataFrame]:
+    def convert_to_numpy(list_df: list[pd.DataFrame]) -> list[pd.DataFrame]:
         """
         Truncate dataframes if needed, then convert them to numpy arrays.
         Params:
@@ -100,12 +100,12 @@ class Data:
             # Load the data from the file into a dataframe
             new_data: pd.Dataframe = pd.read_csv(file_path)
             # Process the dataframe and add it to the list
-            dataframe_list.append(Data.__process_dataframe(new_data))
+            dataframe_list.append(Data.process_dataframe(new_data))
 
         return dataframe_list
 
     @staticmethod
-    def load_data(base_dir: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def load_data(base_dir: str) -> tuple[list[pd.DataFrame], np.ndarray, np.ndarray]:
         """
         Load data from a given base directory. Here the name of the class is the name of the directory.
         Params:
@@ -120,6 +120,7 @@ class Data:
         labels: list[str] = []
         
         for i, class_name in enumerate(os.listdir(base_dir)):
+            print(i, class_name)
             # Add the class name to the build the classes list
             classes.append(class_name)
             # Load the data for the current class
@@ -131,7 +132,7 @@ class Data:
 
         # Return the dataframes as a numpy array, 
         # the labels as a numpy array and the classes as a numpy array
-        return Data.__convert_to_numpy(data), np.array(labels), np.array(classes)
+        return data, np.array(labels), np.array(classes)
     
     @staticmethod
     def data_generator(X: np.ndarray, y: np.ndarray, batch_size: int=32) -> Generator:
