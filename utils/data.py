@@ -23,6 +23,23 @@ class Data:
         return df.iloc[:max_rows]
     
     @staticmethod
+    def __extend_dataframe(df: pd.DataFrame, max_rows: int) -> pd.DataFrame:
+        """
+        Extend a dataframe to a given number of rows.
+        Params:
+            df (pd.DataFrame): Dataframe to extend
+            max_rows (int): Maximum number of rows to reach
+        Returns:
+            pd.DataFrame: Extended dataframe
+        """
+        nb_rows_to_add = max_rows - df.shape[0]
+
+        if nb_rows_to_add > 0:
+            df = pd.concat([df, pd.DataFrame(np.zeros((nb_rows_to_add, df.shape[1])), columns=df.columns)], ignore_index=True, axis=0)
+        
+        return df
+    
+    @staticmethod
     def __create_new_columns(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
         """
         Create a new column from a given column by splitting it into 3 columns (x, y, z).
@@ -60,7 +77,7 @@ class Data:
         return df
 
     @staticmethod
-    def convert_to_numpy(list_df: list[pd.DataFrame]) -> list[pd.DataFrame]:
+    def truncate_to_numpy(list_df: list[pd.DataFrame]) -> np.ndarray:
         """
         Truncate dataframes if needed, then convert them to numpy arrays.
         Params:
@@ -78,6 +95,26 @@ class Data:
         ).astype(np.float32)
         
         return truncated_list_df
+    
+    @staticmethod
+    def convert_to_numpy(list_df: list[pd.DataFrame]) -> np.ndarray:
+        """
+        Truncate dataframes if needed, then convert them to numpy arrays.
+        Params:
+            list_df (list[pd.DataFrame]): List of dataframes to truncate.
+        Returns:
+            list[np.ndarray]: List of truncated dataframes under the form of a numpy multidimensional array.
+        """
+        # Get the maximum number of rows for all dataframes
+        max_rows: int = max([df.shape[0] for df in list_df])
+
+        # Extend the dataframes if needed
+        np_extended_data: np.ndarray = np.array(
+            list(map(lambda df: Data.__extend_dataframe(df, max_rows).to_numpy().astype(np.float32), list_df)),
+            dtype=object
+        ).astype(np.float32)
+        
+        return np_extended_data
     
     @staticmethod
     def __load_class_data(base_dir: str, class_name: str) -> list[pd.DataFrame]:
@@ -135,7 +172,7 @@ class Data:
         return data, np.array(labels), np.array(classes)
     
     @staticmethod
-    def data_generator(X: np.ndarray, y: np.ndarray, batch_size: int=32) -> Generator:
+    def labeled_data_generator(X: np.ndarray, y: np.ndarray, batch_size: int=32) -> Generator:
         """
         Data generator for PyTorch.
         Params:
@@ -165,3 +202,32 @@ class Data:
             
             # Yield the batch
             yield X_batch, y_batch
+    
+    @staticmethod
+    def unlabeled_data_generator(X: np.ndarray, batch_size: int=32) -> Generator:
+        """
+        Data generator for PyTorch.
+        Params:
+            X (np.ndarray): Data
+            batch_size (int): Size of the batch, default to 32
+        Returns:
+            torch.Tensor: Data
+        """
+        # Generate indices
+        indices: np.ndarray = np.arange(X.shape[0])
+        # Shuffle indices
+        np.random.shuffle(indices)
+        
+        # Retrieve suffled data
+        X = X[indices]
+
+        # Iterate over the dataset
+        for i in range(0, X.shape[0], batch_size):
+            # Get batch data
+            X_batch = X[i:i+batch_size]
+            
+            # Convert to torch tensors
+            X_batch = torch.from_numpy(X_batch)
+            
+            # Yield the batch
+            yield X_batch

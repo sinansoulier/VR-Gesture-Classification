@@ -29,15 +29,15 @@ class VRGestureRecognizer(nn.Module):
         super(VRGestureRecognizer, self).__init__()
         # Convolutional layers
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
-        self.conv4 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1)
+        self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+        self.conv4 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
 
         # Flattening layer
         self.flatten = nn.Flatten()
 
         # Fully connected layers
-        self.fc1 = nn.Linear(256*4*7, hidden_size)
+        self.fc1 = nn.Linear(64*4*7, hidden_size)
         self.fc2 = nn.Linear(hidden_size, 64)
         self.fc3 = nn.Linear(64, num_classes)
 
@@ -46,6 +46,8 @@ class VRGestureRecognizer(nn.Module):
         self.softmax = nn.Softmax(dim=1)
         # Pooling layer
         self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
+        # Dropout layer(s)
+        self.dropout = nn.Dropout(p=0.4)
 
     def forward(self, x) -> torch.Tensor:
         """
@@ -61,6 +63,8 @@ class VRGestureRecognizer(nn.Module):
         out = self.maxpool(self.relu(self.conv2(out)))
         out = self.maxpool(self.relu(self.conv3(out)))
         out = self.maxpool(self.relu(self.conv4(out)))
+
+        out = self.dropout(out)
 
         # Flattening feature maps
         out = self.flatten(out)
@@ -207,7 +211,7 @@ class VRGestureRecognizer(nn.Module):
         ax[1].plot(self.history['Val Accuracy'])
         ax[1].set_title('Accuracy')
         ax[1].set_xlabel('Epoch')
-        ax[1].set_ylabel('Loss')
+        ax[1].set_ylabel('Accuracy')
         ax[1].legend(['Training Accuracy', 'Validation Accuracy'])
 
         plt.show()
