@@ -107,7 +107,7 @@ class VRGestureRecognizer(nn.Module):
             val_acc = 0
 
             # Define a data generator
-            data_gen = Data.data_generator(X, y, batch_size=batch_size)
+            data_gen = Data.labeled_data_generator(X, y, batch_size=batch_size)
             n_batches = 0
             
             for batch in data_gen:
