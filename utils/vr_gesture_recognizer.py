@@ -147,15 +147,11 @@ class VRGestureRecognizer(nn.Module):
 
             # Add epoch results to history
             history.loc[epoch] = [mean_loss, mean_acc, val_loss, val_acc]
-        
+
             # Print epoch results
             print(f"Epoch [{epoch+1}/{epochs}] | Loss: {loss.item():.2f} | Accuracy: {mean_acc:.2f} | Val Loss: {val_loss:.2f} | Val Accuracy: {val_acc:.2f}", end='\r')
-            if mean_acc > 0.9:
-                print("Early stopping: accuracy > 0.9" + " "*50)
-                break
-        
+            
         self.history = history
-        
         return history
     
     def predict(self, X) -> torch.Tensor:
