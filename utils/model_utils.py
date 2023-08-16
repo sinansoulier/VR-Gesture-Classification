@@ -1,3 +1,5 @@
+import numpy as np
+
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 from skl2onnx import update_registered_converter
@@ -5,6 +7,7 @@ from skl2onnx.common.shape_calculator import calculate_linear_classifier_output_
 
 from sklearn.pipeline import Pipeline
 from onnxmltools.convert.xgboost.operator_converters.XGBoost import convert_xgboost
+import onnxruntime
 
 from xgboost import XGBClassifier
 
@@ -37,3 +40,17 @@ class ModelUtils:
         onx = convert_sklearn(model, initial_types=initial_type)
         with open(path, 'wb') as f:
             f.write(onx.SerializeToString())
+
+    def run_pytorch_inference(path: str, inputs: np.ndarray):
+        """
+        Loads and runs inference a PyTorch model previously saved at the given path.
+        Args:
+            path (str): Path of the model.
+            inputs (np.ndarry): Inputs to run inference with.
+        Returns:
+            Inference output.
+        """
+        ort_session = onnxruntime.InferenceSession(path)
+        outputs = ort_session.run(None, {"input": inputs})
+
+        return outputs[0].argmax(axis=1)
