@@ -66,7 +66,7 @@ class Data:
         # Drop the time column
         df.drop(columns=['Time'], inplace=True)
         # Cast all data to float
-        df = df.applymap(lambda x: [float(elt) for elt in x.split(';')])
+        df = df.map(lambda x: [float(elt) for elt in x.split(';')])
 
         # Apply split on each column
         list_df_ax = df.columns.map(lambda column_name: Data.__create_new_columns(df, column_name))
