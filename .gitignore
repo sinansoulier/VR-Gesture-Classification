@@ -166,4 +166,4 @@ data*/
 models/
 *.npy
 test*/
-simulated_data/
+simulated_data*/
