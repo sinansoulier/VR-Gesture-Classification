@@ -167,3 +167,4 @@ models/
 *.npy
 test*/
 simulated_data*/
+emotion_data/
