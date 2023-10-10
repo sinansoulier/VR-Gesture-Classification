@@ -5,8 +5,8 @@ from tqdm.auto import tqdm
 import torch
 import torch.nn as nn
 
-from utils.hardware import Hardware
-from utils.data import Data
+from vr_recognition.hardware import Hardware
+from vr_recognition.data import Data
 
 class VRGestureRecognizer(nn.Module):
     """
