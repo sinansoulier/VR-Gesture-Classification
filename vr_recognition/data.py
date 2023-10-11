@@ -157,7 +157,7 @@ class Data:
         labels: list[str] = []
         
         list_paths = os.listdir(base_dir)
-        list_paths = np.array(list_paths)[['HORIZONTAL' in elt for elt in list_paths]]
+        # list_paths = np.array(list_paths)[['HORIZONTAL' in elt for elt in list_paths]]
 
         for i, class_name in enumerate(list_paths):
             print(i, class_name)
